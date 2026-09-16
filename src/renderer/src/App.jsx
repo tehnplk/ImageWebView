@@ -139,17 +139,18 @@ function App() {
 
       {checkMsg && <p className="ok" style={{ margin: '0 0 12px', fontSize: '13px' }}>{checkMsg}</p>}
 
-      <label>Folder</label>
+      <label htmlFor="scanned-folder">ที่อยู่ไฟล์สแกน</label>
       <div className="row">
-        <input value={dir} readOnly placeholder="เลือกโฟลเดอร์..." />
+        <input id="scanned-folder" value={dir} readOnly placeholder="เลือกโฟลเดอร์..." />
         <button onClick={browse} disabled={!!url}>
-          Browse
+          เลือกโฟลเดอร์
         </button>
       </div>
 
-      <label>Server port</label>
+      <label htmlFor="server-port">พอร์ตเว็บเซิร์ฟเวอร์</label>
       <div className="row">
         <input
+          id="server-port"
           type="number"
           value={port}
           min="1"
@@ -159,9 +160,10 @@ function App() {
         />
       </div>
 
-      <label>URL เพื่อ Login (ค่าเริ่มต้น: http://127.0.0.1:8081)</label>
+      <label htmlFor="auth-url">URL ระบบยืนยันตัวตน HOSxP (Rservice)</label>
       <div className="row">
         <input
+          id="auth-url"
           type="text"
           value={authUrl}
           placeholder="http://127.0.0.1:8081"
@@ -169,7 +171,7 @@ function App() {
           onChange={(e) => handleAuthChange(e.target.value)}
         />
         <button type="button" onClick={testAuth} disabled={!authUrl || testingAuth}>
-          {testingAuth ? 'Testing...' : 'Test'}
+          {testingAuth ? 'กำลังทดสอบ...' : 'ทดสอบ'}
         </button>
       </div>
       {authStatus && (
@@ -179,12 +181,12 @@ function App() {
       )}
 
       <button className="primary" onClick={toggle} disabled={!dir}>
-        {url ? 'Stop server' : 'Start server'}
+        {url ? 'หยุดเว็บเซิร์ฟเวอร์' : 'เริ่มเว็บเซิร์ฟเวอร์'}
       </button>
 
       {url && (
         <p className="ok">
-          Serving <b>{dir}</b> — เครื่องอื่นเปิดที่{' '}
+          กำลังให้บริการ <b>{dir}</b> — เปิดจากเครื่องอื่นได้ที่{' '}
           <a href={url} target="_blank" rel="noreferrer">
             {url}
           </a>

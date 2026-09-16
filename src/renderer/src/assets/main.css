@@ -205,11 +205,14 @@ code {
   color: #fff;
 }
 .setup .ok {
-  color: #7ad07a;
-  word-break: break-all;
+  color: #4ade80;
+  word-break: break-word;
+  line-height: 1.4;
 }
 .setup .err {
-  color: #e66;
+  color: #f87171;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .docs {

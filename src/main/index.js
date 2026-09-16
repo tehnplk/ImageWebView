@@ -92,6 +92,16 @@ app.whenReady().then(() => {
     return true
   })
   ipcMain.handle('test-auth-url', async (_e, url) => {
+    const stripHtml = (str) => {
+      if (!str) return ''
+      return str
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
+
     try {
       const base = (url || 'http://127.0.0.1:8081').replace(/\/+$/, '')
       const target = base.endsWith('/checkuser') ? base : base + '/checkuser'
@@ -102,9 +112,51 @@ app.whenReady().then(() => {
         signal: AbortSignal.timeout(4000)
       })
       const text = await res.text()
-      return { ok: true, msg: `เชื่อมต่อสำเร็จ (HTTP ${res.status}): ${text.slice(0, 80)}` }
+      const clean = stripHtml(text)
+
+      // HTTP 200 - 299 OK
+      if (res.ok) {
+        try {
+          JSON.parse(text)
+          return { ok: true, msg: `เชื่อมต่อสำเร็จ: พบระบบ Rservice HOSxP พร้อมใช้งาน (HTTP ${res.status})` }
+        } catch {
+          return {
+            ok: false,
+            msg: `เชื่อมต่อได้แต่ไม่ใช่ Rservice (HTTP ${res.status}): ได้รับข้อมูลที่ไม่ใช่ JSON`
+          }
+        }
+      }
+
+      // HTTP 500 Internal Server Error (e.g. MySQL lost connection)
+      if (res.status === 500) {
+        let detail = clean
+        if (/Lost connection to MySQL/i.test(clean)) {
+          detail = 'ฐานข้อมูล HOSxP ไม่ตอบสนอง (Lost connection to MySQL server)'
+        } else if (/Internal Application Error/i.test(clean)) {
+          detail = clean.replace(/Internal Application Error/i, '').replace(/\/checkuser/i, '').trim() || 'Internal Application Error'
+        }
+        return { ok: false, msg: `Rservice ขัดข้อง (HTTP 500): ${detail}` }
+      }
+
+      // HTTP 404 Not Found
+      if (res.status === 404) {
+        return { ok: false, msg: 'เชื่อมต่อไม่สำเร็จ (HTTP 404): ไม่พบบริการ /checkuser บนเซิร์ฟเวอร์นี้' }
+      }
+
+      return {
+        ok: false,
+        msg: `เชื่อมต่อไม่สำเร็จ (HTTP ${res.status}): ${clean.slice(0, 100) || res.statusText}`
+      }
     } catch (e) {
-      return { ok: false, msg: `เชื่อมต่อไม่สำเร็จ: ${e.message || e}` }
+      const errStr = e.message || String(e)
+      const errCode = e.code || ''
+      if (e.name === 'TimeoutError' || /timeout/i.test(errStr)) {
+        return { ok: false, msg: 'เชื่อมต่อไม่สำเร็จ: หมดเวลาการเชื่อมต่อ (Timeout 4s) ตรวจสอบว่า IP และ Port ถูกต้อง' }
+      }
+      if (/refused/i.test(errStr) || /refused/i.test(errCode) || /unable to connect/i.test(errStr)) {
+        return { ok: false, msg: 'เชื่อมต่อไม่สำเร็จ: ปฏิเสธการเชื่อมต่อ (Connection Refused) ตรวจสอบว่าเปิดโปรแกรม Rservice แล้วหรือยัง' }
+      }
+      return { ok: false, msg: `เชื่อมต่อไม่สำเร็จ: ${errStr}` }
     }
   })
   ipcMain.handle('start-server', (_e, dir, port, authUrl) =>

@@ -87,7 +87,7 @@ function loginPage(res, errorMsg = '', returnUrl = '/', username = '') {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>เข้าสู่ระบบ - ระบบเอกสารผู้ป่วย Electronic</title>
+<title>เข้าสู่ระบบ - ระบบเอกสารผู้ป่วยอิเล็กทรอนิกส์</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -220,11 +220,11 @@ function loginPage(res, errorMsg = '', returnUrl = '/', username = '') {
       <path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>
     </svg>
   </div>
-  <h1>ระบบเอกสารผู้ป่วย Electronic</h1>
+  <h1>ระบบเอกสารผู้ป่วยอิเล็กทรอนิกส์</h1>
   <p class="subtitle">โรงพยาบาลโกสัมพีนคร</p>
 
   <div class="badge-hosxp">
-    <span>🔒</span> Login ด้วยบัญชีผู้ใช้ Hosxp
+    <span>🔒</span> เข้าสู่ระบบด้วยบัญชี HOSxP
   </div>
 
   ${errorMsg ? `<div class="alert-error"><span>⚠️</span><span>${esc(errorMsg)}</span></div>` : ''}
@@ -232,18 +232,18 @@ function loginPage(res, errorMsg = '', returnUrl = '/', username = '') {
   <form method="post" action="/login">
     <input type="hidden" name="returnUrl" value="${esc(returnUrl)}">
     <div class="field">
-      <label for="username">ชื่อผู้ใช้งาน (Username)</label>
+      <label for="username">ชื่อผู้ใช้</label>
       <input id="username" name="username" type="text" value="${esc(username)}" required autofocus placeholder="ระบุชื่อผู้ใช้ HOSxP...">
     </div>
     <div class="field">
-      <label for="password">รหัสผ่าน (Password)</label>
+      <label for="password">รหัสผ่าน</label>
       <input id="password" name="password" type="password" required placeholder="ระบุรหัสผ่าน...">
     </div>
-    <button type="submit" class="btn-submit">Login ด้วยบัญชีผู้ใช้ Hosxp</button>
+    <button type="submit" class="btn-submit">เข้าสู่ระบบด้วยบัญชี HOSxP</button>
   </form>
 
   <div class="footer-note">
-    ตรวจสอบสิทธิ์ผ่านระบบ HOSxP Authentication
+    ตรวจสอบสิทธิ์ผ่านระบบ HOSxP
   </div>
 </div>
 </body>
@@ -291,11 +291,29 @@ export function startServer(root, port, typeNames = {}, authUrl = 'http://127.0.
                 signal: AbortSignal.timeout(5000)
               })
               const rawText = await authRes.text()
+              const stripHtml = (str) =>
+                (str || '')
+                  .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                  .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                  .replace(/<[^>]+>/g, ' ')
+                  .replace(/\s+/g, ' ')
+                  .trim()
+
+              if (!authRes.ok) {
+                const clean = stripHtml(rawText)
+                let detail = clean
+                if (/Lost connection to MySQL/i.test(clean)) {
+                  detail = 'ฐานข้อมูล HOSxP ไม่ตอบสนอง (Lost connection to MySQL)'
+                }
+                loginPage(res, `ระบบตรวจสอบสิทธิ์ขัดข้อง (HTTP ${authRes.status}): ${detail.slice(0, 100)}`, returnUrl, username)
+                return
+              }
+
               let data = null
               try {
                 data = JSON.parse(rawText)
               } catch (parseErr) {
-                loginPage(res, `ระบบตรวจสอบสิทธิ์ส่งข้อมูลไม่ถูกต้อง (${rawText.slice(0, 100)})`, returnUrl, username)
+                loginPage(res, `ระบบตรวจสอบสิทธิ์ส่งข้อมูลไม่ถูกต้อง: ${stripHtml(rawText).slice(0, 100)}`, returnUrl, username)
                 return
               }
               if (Array.isArray(data) && data[0]?.status === 'true') {
@@ -497,7 +515,7 @@ async function searchPage(root, typeNames, hn, res, currentUsername = '') {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ระบบเอกสารผู้ป่วย Electronic</title>
+<title>ระบบเอกสารผู้ป่วยอิเล็กทรอนิกส์</title>
 <style>
   * { box-sizing: border-box; }
   :root { interpolate-size: allow-keywords; }
@@ -655,7 +673,7 @@ async function searchPage(root, typeNames, hn, res, currentUsername = '') {
     const byTypeEl = document.getElementById('view-by-type')
     const badge = document.getElementById('view-mode-badge')
     if (badge) {
-      badge.textContent = mode === 'type' ? 'ตามประเภท' : 'ตามวันที่'
+      badge.textContent = mode === 'type' ? 'ตามประเภทเอกสาร' : 'ตามวันที่'
     }
     if (byDateEl && byTypeEl) {
       if (mode === 'type') {
@@ -737,15 +755,15 @@ function viewerPage(src, res) {
   <button id="out" title="ย่อ">&minus;</button>
   <span id="pct" style="min-width:40px; text-align:center;">100%</span>
   <button id="in" title="ขยาย">+</button>
-  <button id="fit">Fit To Page</button>
+  <button id="fit">พอดีกับความกว้าง</button>
   <span id="info" style="color:#ddd; font-size:12px; margin: 0 6px;"></span>
 
   <div class="sep"></div>
 
-  <button id="tool-pan" class="active" title="โหมดเลื่อนหน้า (Pan)">🖐️ Pan</button>
-  <button id="tool-pen" title="โหมดปากกา (Pen)">✏️ Pen</button>
-  <button id="tool-highlighter" title="โหมดไฮไลต์เน้นข้อความ (Highlighter)">🖍️ Highlight</button>
-  <button id="tool-text" title="โหมดใส่ข้อความ (Text)">🔤 Text</button>
+  <button id="tool-pan" class="active" title="โหมดเลื่อนหน้า">🖐️ เลื่อน</button>
+  <button id="tool-pen" title="โหมดปากกา">✏️ ปากกา</button>
+  <button id="tool-highlighter" title="โหมดไฮไลต์เน้นข้อความ">🖍️ ไฮไลต์</button>
+  <button id="tool-text" title="โหมดใส่ข้อความ">🔤 ข้อความ</button>
 
   <div class="sep"></div>
 
@@ -765,8 +783,8 @@ function viewerPage(src, res) {
 
   <div class="sep"></div>
 
-  <button id="btn-undo" title="เลิกทำ (Ctrl+Z)">↩️ Undo</button>
-  <button id="btn-clear" title="ล้าง Annotation ทั้งหมด">🗑️ Clear</button>
+  <button id="btn-undo" title="เลิกทำ (Ctrl+Z)">↩️ เลิกทำ</button>
+  <button id="btn-clear" title="ล้างเครื่องหมายทั้งหมด">🗑️ ล้างทั้งหมด</button>
 </div>
 <div id="wrap"></div>
 <script>
@@ -917,7 +935,7 @@ function setupAnnotEvents(annotCanvas) {
     const rect = annotCanvas.getBoundingClientRect()
     const nx = (e.clientX - rect.left) / rect.width
     const ny = (e.clientY - rect.top) / rect.height
-    const text = prompt('พิมพ์ข้อความ Annotation:')
+    const text = prompt('พิมพ์ข้อความกำกับ:')
     if (text && text.trim()) {
       const textItem = {
         type: 'text',
@@ -1080,13 +1098,13 @@ btnClear.onclick = () => {
     btnClear.style.background = '#e11d48'
     setTimeout(() => {
       clearPending = false
-      btnClear.textContent = '🗑️ Clear'
+      btnClear.textContent = '🗑️ ล้างทั้งหมด'
       btnClear.style.background = ''
     }, 3500)
     return
   }
   clearPending = false
-  btnClear.textContent = '🗑️ Clear'
+  btnClear.textContent = '🗑️ ล้างทั้งหมด'
   btnClear.style.background = ''
   annotations = {}
   undoStack = []
