@@ -1,28 +1,71 @@
 import { useEffect, useState } from 'react'
-import { FileText } from 'lucide-react'
 
 function App() {
   const [dir, setDir] = useState('')
   const [port, setPort] = useState(3000)
+  const [authUrl, setAuthUrl] = useState('http://127.0.0.1:8081')
   const [url, setUrl] = useState('')
   const [error, setError] = useState('')
-  const [docs, setDocs] = useState([])
-
-  const load = async (path) => {
-    setDir(path)
-    setDocs(await window.api.scanDocs(path))
-  }
+  const [testingAuth, setTestingAuth] = useState(false)
+  const [authStatus, setAuthStatus] = useState(null)
 
   // start on the scanned folder if it's where it's expected to be
+  // Auto-updater states
+  const [appVersion, setAppVersion] = useState('0.1.0')
+  const [updateInfo, setUpdateInfo] = useState(null)
+  const [downloadProgress, setDownloadProgress] = useState(null)
+  const [isDownloaded, setIsDownloaded] = useState(false)
+  const [checkMsg, setCheckMsg] = useState('')
+
   useEffect(() => {
-    window.api.scannedDir().then((d) => d && load(d))
     window.api.scannedDir().then((d) => d && setDir(d))
+    window.api.getAuthUrl().then((u) => u && setAuthUrl(u))
+    window.api.getAppVersion?.().then((v) => v && setAppVersion(v))
+
+    const cleanup = window.api.onUpdateStatus?.((status) => {
+      if (status.state === 'available') {
+        setUpdateInfo(status)
+        setCheckMsg('')
+      } else if (status.state === 'downloading') {
+        setDownloadProgress(status.percent)
+      } else if (status.state === 'downloaded') {
+        setIsDownloaded(true)
+        setDownloadProgress(null)
+      } else if (status.state === 'not-available') {
+        setCheckMsg('คุณกำลังใช้งานเวอร์ชันล่าสุดแล้ว (' + (status.version || appVersion) + ')')
+        setTimeout(() => setCheckMsg(''), 4000)
+      } else if (status.state === 'checking') {
+        setCheckMsg('กำลังตรวจสอบเวอร์ชันใหม่...')
+      } else if (status.state === 'error') {
+        setCheckMsg('')
+      }
+    })
+
+    return () => cleanup?.()
   }, [])
 
   const browse = async () => {
     const picked = await window.api.pickFolder()
-    if (picked) await load(picked)
     if (picked) setDir(picked)
+  }
+
+  const handleAuthChange = (val) => {
+    setAuthUrl(val)
+    setAuthStatus(null)
+    window.api.setAuthUrl(val)
+  }
+
+  const testAuth = async () => {
+    setTestingAuth(true)
+    setAuthStatus(null)
+    try {
+      const res = await window.api.testAuthUrl(authUrl)
+      setAuthStatus(res)
+    } catch (e) {
+      setAuthStatus({ ok: false, msg: String(e.message || e) })
+    } finally {
+      setTestingAuth(false)
+    }
   }
 
   const toggle = async () => {
@@ -32,16 +75,69 @@ function App() {
         await window.api.stopServer()
         setUrl('')
       } else {
-        setUrl(await window.api.startServer(dir, Number(port)))
+        setUrl(await window.api.startServer(dir, Number(port), authUrl))
       }
     } catch (e) {
       setError(String(e.message || e))
     }
   }
 
+  const handleStartUpdate = async () => {
+    try {
+      await window.api.downloadUpdate?.()
+    } catch (e) {
+      setError('เกิดข้อผิดพลาดในการดาวน์โหลด: ' + (e.message || e))
+    }
+  }
+
+  const handleInstallNow = () => {
+    window.api.installUpdate?.()
+  }
+
+  const handleManualCheck = async (e) => {
+    e?.preventDefault()
+    setCheckMsg('กำลังตรวจสอบ...')
+    await window.api.checkForUpdates?.()
+  }
+
   return (
     <div className="setup">
-      <h2>Static HTML Server</h2>
+      <h2>ImageWebView Server</h2>
+
+      {/* Auto Update Notification Banner */}
+      {updateInfo && (
+        <div className="update-card">
+          <div className="update-card-header">
+            <div className="update-title">
+              <span>🚀</span>
+              <div>
+                <strong>พบเวอร์ชันใหม่ v{updateInfo.version}</strong>
+              </div>
+            </div>
+            {isDownloaded ? (
+              <button className="btn-update install" onClick={handleInstallNow}>
+                รีสตาร์ทเพื่อติดตั้ง
+              </button>
+            ) : downloadProgress !== null ? (
+              <span style={{ fontSize: '13px', color: '#93c5fd' }}>{downloadProgress}%</span>
+            ) : (
+              <button className="btn-update" onClick={handleStartUpdate}>
+                อัปเดตเลย
+              </button>
+            )}
+          </div>
+          {downloadProgress !== null && (
+            <div className="progress-wrap">
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${downloadProgress}%` }}></div>
+              </div>
+              <span style={{ fontSize: '11px', opacity: 0.8 }}>กำลังดาวน์โหลดตัวอัปเดต...</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {checkMsg && <p className="ok" style={{ margin: '0 0 12px', fontSize: '13px' }}>{checkMsg}</p>}
 
       <label>Folder</label>
       <div className="row">
@@ -63,6 +159,25 @@ function App() {
         />
       </div>
 
+      <label>URL เพื่อ Login (ค่าเริ่มต้น: http://127.0.0.1:8081)</label>
+      <div className="row">
+        <input
+          type="text"
+          value={authUrl}
+          placeholder="http://127.0.0.1:8081"
+          disabled={!!url}
+          onChange={(e) => handleAuthChange(e.target.value)}
+        />
+        <button type="button" onClick={testAuth} disabled={!authUrl || testingAuth}>
+          {testingAuth ? 'Testing...' : 'Test'}
+        </button>
+      </div>
+      {authStatus && (
+        <p className={authStatus.ok ? 'ok' : 'err'} style={{ fontSize: '13px', margin: '4px 0 0' }}>
+          {authStatus.msg}
+        </p>
+      )}
+
       <button className="primary" onClick={toggle} disabled={!dir}>
         {url ? 'Stop server' : 'Start server'}
       </button>
@@ -77,39 +192,10 @@ function App() {
       )}
       {error && <p className="err">{error}</p>}
 
-      {docs.length > 0 && (
-        <table className="docs">
-          <thead>
-            <tr>
-              <th>Doc type</th>
-              <th>dep</th>
-              <th>HN</th>
-              <th>Date</th>
-              <th>VN</th>
-            </tr>
-          </thead>
-          <tbody>
-            {docs.map((d) => (
-              <tr key={d.path}>
-                <td>
-                  <FileText size={14} className="ficon" />
-                  {url ? (
-                    <a href={`${url}/view?src=/${d.path}`} target="_blank" rel="noreferrer">
-                      {d.doc_type_name || d.code}
-                    </a>
-                  ) : (
-                    d.doc_type_name || d.code
-                  )}
-                </td>
-                <td>{d.dep}</td>
-                <td>{d.hn}</td>
-                <td>{d.date_serv}</td>
-                <td>{d.vn}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="app-meta">
+        <span>เวอร์ชัน v{appVersion}</span>
+        <a href="#check" onClick={handleManualCheck}>ตรวจสอบเวอร์ชันใหม่</a>
+      </div>
     </div>
   )
 }

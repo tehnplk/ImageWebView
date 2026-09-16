@@ -7,8 +7,20 @@ const api = {
   scanDocs: (dir) => ipcRenderer.invoke('scan-docs', dir),
   scannedDir: () => ipcRenderer.invoke('scanned-dir'),
   pickFolder: () => ipcRenderer.invoke('pick-folder'),
-  startServer: (dir, port) => ipcRenderer.invoke('start-server', dir, port),
-  stopServer: () => ipcRenderer.invoke('stop-server')
+  getAuthUrl: () => ipcRenderer.invoke('get-auth-url'),
+  setAuthUrl: (url) => ipcRenderer.invoke('set-auth-url', url),
+  testAuthUrl: (url) => ipcRenderer.invoke('test-auth-url', url),
+  startServer: (dir, port, authUrl) => ipcRenderer.invoke('start-server', dir, port, authUrl),
+  stopServer: () => ipcRenderer.invoke('stop-server'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  onUpdateStatus: (callback) => {
+    const cb = (_e, val) => callback(val)
+    ipcRenderer.on('update-status', cb)
+    return () => ipcRenderer.removeListener('update-status', cb)
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

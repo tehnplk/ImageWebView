@@ -6,6 +6,7 @@ import icon from '../../resources/icon.png?asset'
 import { startServer, stopServer } from './server'
 import { openDb, getSetting, setSetting } from './db'
 import { scanDocs } from './scan'
+import { setupAutoUpdater } from './updater'
 
 function createWindow() {
   // Create the browser window.
@@ -20,6 +21,8 @@ function createWindow() {
       sandbox: false
     }
   })
+
+  setupAutoUpdater(mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -64,7 +67,7 @@ app.whenReady().then(() => {
         .map((r) => [r.code.toLowerCase(), r.doc_type_name])
     )
 
-  ipcMain.handle('scan-docs', (_e, dir) => scanDocs(dir, typeNames()))
+  ipcMain.handle('scan-docs', () => [])
 
   // the scanned root: what Browse last picked, else scanned/ next to the project (dev) or the exe
   const scannedDir = () => {
@@ -83,7 +86,30 @@ app.whenReady().then(() => {
     setSetting(db, 'scanned_dir', filePaths[0]) // remembered as the scanned root
     return filePaths[0]
   })
-  ipcMain.handle('start-server', (_e, dir, port) => startServer(dir, port, typeNames()))
+  ipcMain.handle('get-auth-url', () => getSetting(db, 'auth_url') || 'http://127.0.0.1:8081')
+  ipcMain.handle('set-auth-url', (_e, url) => {
+    setSetting(db, 'auth_url', url || 'http://127.0.0.1:8081')
+    return true
+  })
+  ipcMain.handle('test-auth-url', async (_e, url) => {
+    try {
+      const base = (url || 'http://127.0.0.1:8081').replace(/\/+$/, '')
+      const target = base.endsWith('/checkuser') ? base : base + '/checkuser'
+      const res = await fetch(target, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'username=sa&password=sa',
+        signal: AbortSignal.timeout(4000)
+      })
+      const text = await res.text()
+      return { ok: true, msg: `เชื่อมต่อสำเร็จ (HTTP ${res.status}): ${text.slice(0, 80)}` }
+    } catch (e) {
+      return { ok: false, msg: `เชื่อมต่อไม่สำเร็จ: ${e.message || e}` }
+    }
+  })
+  ipcMain.handle('start-server', (_e, dir, port, authUrl) =>
+    startServer(dir, port, typeNames(), authUrl || getSetting(db, 'auth_url') || 'http://127.0.0.1:8081')
+  )
   ipcMain.handle('stop-server', () => stopServer())
 
   createWindow()

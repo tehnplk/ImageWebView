@@ -1,10 +1,14 @@
 {
   "name": "image-web-view",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "An Electron application with React",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "tehnplk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tehnplk/ImageWebView.git"
+  },
+  "homepage": "https://github.com/tehnplk/ImageWebView",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -21,6 +25,7 @@
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "adm-zip": "^0.6.1",
+    "electron-updater": "^6.8.9",
     "lucide-react": "^1.46.0",
     "pdfjs-dist": "^6.3.289"
   },
