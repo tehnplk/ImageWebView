@@ -964,14 +964,6 @@ async function render() {
     const page = await doc.getPage(n)
     if (currentToken !== renderToken) return
     const vp = page.getViewport({ scale: scale * dpr })
-    const canvas = document.createElement('canvas')
-    canvas.width = vp.width
-    canvas.height = vp.height
-    canvas.style.width = vp.width / dpr + 'px'
-    canvas.style.height = vp.height / dpr + 'px'
-    wrap.append(canvas)
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise
-
     const pageBox = document.createElement('div')
     pageBox.className = 'page-box'
     pageBox.style.width = (vp.width / dpr) + 'px'

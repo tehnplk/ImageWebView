@@ -3,6 +3,11 @@ productName: ImageWebView
 directories:
   buildResources: build
 files:
+  - '!tool/**'
+  - '!handoff.md'
+  - '!lookup/medico_scan_user_*.csv'
+  - '!lookup/medico_scan_log.csv'
+  - '!lookup/medico_scan_doc.csv'
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
