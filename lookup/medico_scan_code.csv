@@ -1,0 +1,80 @@
+"code","doc_name","depart","no","dep_hos"
+"cop","ปกOPD Card","opd","99",
+"hmw","Home ward","ipd",,
+"ial","IPD All","ipd","17",
+"iar","Anesthetic Record","ipd","16",
+"ich","เอกสารChart","ipd","19",
+"icr","Consultation Record","ipd","15",
+"idn","Discharge Note","ipd","14",
+"ids","Discharge Summary","ipd","13",
+"ifc","Informed Consent & Referring Letter Sheet","ipd","12",
+"iil","Investigation Lab Report","ipd","11",
+"ilr","Labor Record","ipd","10",
+"imh","Medical History","ipd","9",
+"inn","Nurse Note Other Form","ipd","8",
+"ior","Operation Report","ipd","7",
+"iot","Other Form","ipd","6",
+"ipe","Physician Examination","ipd","5",
+"ipn","Progress Note","ipd","4",
+"ips","Physiotherapy Sheet","ipd","18",
+"irf","Refer Form","ipd","3",
+"irh","Rehabilitation Record","ipd","2",
+"ivs","Vital Sign","ipd","1",
+"l01","LabIPD01","ipd","22",
+"l02","LabIPD02","ipd","23",
+"l03","LabIPD03","ipd","24",
+"l04","LabIPD04","ipd","25",
+"l05","LabIPD05","ipd","26",
+"l06","LabIPD06","ipd","27",
+"l07","LabIPD07","ipd","28",
+"l08","LabIPD08","ipd","29",
+"l09","LabIPD09","ipd","30",
+"l10","LabIPD10","ipd","31",
+"l11","LabIPD11","ipd","32",
+"l12","LabIPD12","ipd","33",
+"l13","LabIPD13","ipd","34",
+"l14","LabIPD14","ipd","35",
+"l15","LabIPD15","ipd","36",
+"lo1","LabOPD1","opd","37",
+"lo2","LabOPD2","opd","38",
+"lo3","LabOPD3","opd","39",
+"oal","อื่นๆ","opd","12",
+"oan","คลินิกฝากครรภ์","opd","1","036"
+"oap","ใบนัดผู้ป่วย","opd","6",
+"ocd","คลินิกโรคไตแบบบูรณาการ","opd","1","043"
+"ock","คลินิคCKD","opd","1","024"
+"ocn","ห้องตรวจแพทย์แผนจีน","opd","1","052"
+"oco","คลินิกปอดอุดกั้นเรื้อรังและหอบหืด","opd","1","029"
+"odc","ใบรับรองแพทย์ ผู้ป่วยนอก","opd","11",
+"ode","ห้องทันตกรรม","opd","4","005"
+"odg","ใบสั่งยา","opd","20",
+"odh","คลินิกเบาหวานและความดัน","opd","1","040"
+"odm","คลินิกเบาหวาน","opd","1","026"
+"odt","DEATH","opd","13",
+"oec","ใบ ECHO","opd","8",
+"oek","EKG Form","opd","5",
+"oer","ห้องER","opd","3","011"
+"oht","คลินิกความดัน","opd","1","027"
+"ojw","คลินิกจิตเวช","opd","1","004"
+"olb","Lab Form","opd","21","007"
+"olr","ห้องคลอด","opd","1","017"
+"omg","ห้องตรวจแพทย์แผนไทย","opd","1","041"
+"ons","ใบ NST","opd","7",
+"oo3","ตึกผู้ป่วยใน","opd","1","009"
+"ooo","เอกสารของรพ.อื่น","opd","9",
+"oop","OPD Slip","opd","98",
+"opc","เวชปฏิบัติครอบครัวและชุมชน","opd","1","015"
+"opd","opdรวม","opd","1",
+"oph","เวชปฏิบัติ ฯ เยี่ยมบ้าน","opd","1","039"
+"opy","กายภาพ","opd","1","035,050,042"
+"ora","Refer Form อื่นๆ","opd","15",
+"orf","ใบ Refer","opd","10",
+"ori","Refer Form รับไว้รักษา","opd","16",
+"oro","Refer Form ส่งต่อรักษา","opd","17",
+"osc","ใบคัดกรองสุขภาพ","opd","18",
+"ose","เอกสารลับ","opd","14",
+"otb","คลินิกวัณโรค","opd","1","014"
+"ovn","OPDรายวัน","opd","2","010,013,016,019,020,021,025,030,018,028"
+"oxx","test OPD","opd","19",
+"plc","Palliative care","opd",,
+"sep","Sepsis","opd",,
