@@ -1,6 +1,6 @@
 {
   "name": "image-web-view",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "An Electron application with React",
   "main": "./out/main/index.js",
   "author": "tehnplk",

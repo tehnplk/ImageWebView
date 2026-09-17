@@ -7,7 +7,8 @@ export async function scanDocs(root, typeNames = {}) {
   return files
     .filter((f) => f.toLowerCase().endsWith('.zip'))
     .map((f) => {
-      const [code, hn, date_serv, vn] = basename(f, '.zip').split('_')
+      const [code, hn, ymd, vn] = basename(f, '.zip').split('_')
+      const date_serv = ymd?.slice(0, 8) // บางไฟล์เป็น YYYYMMDDHHMMSS เอาแค่ 8 หลักหน้า
       const dep = dirname(f).split(sep).pop()
       return {
         path: f.split(sep).join('/'),

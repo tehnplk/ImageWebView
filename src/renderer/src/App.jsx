@@ -148,7 +148,6 @@ function App() {
       </div>
 
       <label htmlFor="server-port">พอร์ตเว็บเซิร์ฟเวอร์</label>
-      <label htmlFor="server-port">WebView Port</label>
       <div className="row">
         <input
           id="server-port"
@@ -162,7 +161,6 @@ function App() {
       </div>
 
       <label htmlFor="auth-url">URL ระบบยืนยันตัวตน HOSxP (Rservice)</label>
-      <label htmlFor="auth-url">URL Rservice Login to HOSxP</label>
       <div className="row">
         <input
           id="auth-url"

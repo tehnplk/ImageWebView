@@ -277,11 +277,13 @@ export function startServer(root, port, typeNames = {}, authUrl = 'http://127.0.
 
         if (url.pathname === '/login') {
           if (req.method === 'POST') {
+            let username = ''
+            let returnUrl = '/'
             try {
               const params = new URLSearchParams(await readBody(req))
-              const username = params.get('username')?.trim() || ''
+              username = params.get('username')?.trim() || ''
               const password = params.get('password') || ''
-              const returnUrl = params.get('returnUrl') || '/'
+              returnUrl = params.get('returnUrl') || '/'
               const base = authUrl.replace(/\/+$/, '')
               const target = base.endsWith('/checkuser') ? base : base + '/checkuser'
               const authRes = await fetch(target, {
@@ -312,7 +314,7 @@ export function startServer(root, port, typeNames = {}, authUrl = 'http://127.0.
               let data = null
               try {
                 data = JSON.parse(rawText)
-              } catch (parseErr) {
+              } catch {
                 loginPage(res, `ระบบตรวจสอบสิทธิ์ส่งข้อมูลไม่ถูกต้อง: ${stripHtml(rawText).slice(0, 100)}`, returnUrl, username)
                 return
               }
@@ -543,7 +545,11 @@ async function searchPage(root, typeNames, hn, res, currentUsername = '') {
   #toggle-view:hover { background: #f0f2f5; border-color: #bbb; }
   #toggle-view svg { color: #555; }
   .badge-mode { font-size: 11px; background: #eef3ff; color: #2b5fd9; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
-  nav { width: 300px; overflow: auto; border-right: 1px solid #ddd; transition: width .2s ease, min-width .2s ease; flex-shrink: 0; }
+  nav { width: 280px; min-width: 150px; max-width: 380px; overflow: auto; border-right: 1px solid #ddd; transition: width .2s ease, min-width .2s ease; flex-shrink: 0; }
+  nav.resizing { transition: none; }
+  #nav-resize { width: 5px; flex-shrink: 0; cursor: col-resize; background: transparent; }
+  #nav-resize:hover, #nav-resize.resizing { background: #2b5fd9; }
+  nav.collapsed + #nav-resize { display: none; }
   nav.collapsed { width: 0 !important; min-width: 0 !important; border-right: none !important; overflow: hidden !important; visibility: hidden; }
   nav a { display: flex; align-items: center; gap: 8px; padding: 7px 14px 7px 32px; border-bottom: 1px solid #eee; text-decoration: none; color: #222; font-size: 12px; }
   nav a:hover { background: #eef3ff; }
@@ -562,7 +568,8 @@ async function searchPage(root, typeNames, hn, res, currentUsername = '') {
     .header-left { position: static; }
     .header-right { position: static; }
     main { flex-direction: column; }
-    nav { width: 100%; max-height: 40vh; }
+    nav { width: 100% !important; max-width: none; max-height: 40vh; }
+    #nav-resize { display: none; }
     nav.collapsed { max-height: 0 !important; width: 100% !important; border-bottom: none !important; }
   }
 </style>
@@ -604,7 +611,7 @@ async function searchPage(root, typeNames, hn, res, currentUsername = '') {
   ${itemsByDate && firstDoc ? `<nav id="nav">
     <div id="view-by-date">${itemsByDate}</div>
     <div id="view-by-type" style="display:none;">${itemsByType}</div>
-  </nav><iframe name="pdf" src="/view?src=/${encodeURIComponent(firstDoc.path).split('%2F').join('/')}"></iframe>` : `<p class="empty">${hn ? `ไม่พบเอกสารของ HN ${esc(hn)}` : 'ระบุ HN ที่ต้องการค้นเอกสาร'}</p>`}
+  </nav><div id="nav-resize"></div><iframe name="pdf" src="/view?src=/${encodeURIComponent(firstDoc.path).split('%2F').join('/')}"></iframe>` : `<p class="empty">${hn ? `ไม่พบเอกสารของ HN ${esc(hn)}` : 'ระบุ HN ที่ต้องการค้นเอกสาร'}</p>`}
 </main>
 <script>
   const hnInput = document.getElementById('hn-input')
@@ -706,6 +713,28 @@ async function searchPage(root, typeNames, hn, res, currentUsername = '') {
   if (localStorage.getItem('nav_collapsed') === '1') {
     document.getElementById('nav')?.classList.add('collapsed')
   }
+
+  const navEl = document.getElementById('nav')
+  const grip = document.getElementById('nav-resize')
+  const clampW = (w) => Math.min(380, Math.max(150, w))
+  const savedW = Number(localStorage.getItem('nav_width'))
+  if (navEl && savedW) navEl.style.width = clampW(savedW) + 'px'
+  grip?.addEventListener('pointerdown', (e) => {
+    e.preventDefault()
+    grip.setPointerCapture(e.pointerId)
+    grip.classList.add('resizing')
+    navEl.classList.add('resizing')
+  })
+  grip?.addEventListener('pointermove', (e) => {
+    if (!grip.hasPointerCapture(e.pointerId)) return
+    navEl.style.width = clampW(e.clientX - navEl.getBoundingClientRect().left) + 'px'
+  })
+  grip?.addEventListener('pointerup', (e) => {
+    grip.releasePointerCapture(e.pointerId)
+    grip.classList.remove('resizing')
+    navEl.classList.remove('resizing')
+    localStorage.setItem('nav_width', parseInt(navEl.style.width, 10) || 280)
+  })
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
       e.preventDefault()

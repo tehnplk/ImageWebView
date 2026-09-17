@@ -5,7 +5,6 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { startServer, stopServer } from './server'
 import { openDb, getSetting, setSetting } from './db'
-import { scanDocs } from './scan'
 import { setupAutoUpdater } from './updater'
 
 function createWindow() {

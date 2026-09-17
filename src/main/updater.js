@@ -54,7 +54,7 @@ export function setupAutoUpdater(mainWindow) {
             return
           }
         }
-      } catch {}
+      } catch { /* GitHub fallback failed; report the original updater error below */ }
     }
     send('update-status', {
       state: 'error',
