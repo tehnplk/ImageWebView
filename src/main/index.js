@@ -7,7 +7,23 @@ import { startServer, stopServer } from './server'
 import { openDb, getSetting, setSetting } from './db'
 import { setupAutoUpdater } from './updater'
 
-function createWindow() {
+// Windows reports openAtLogin only when read with the same args it was set with
+const LOGIN_ARGS = ['--autostart']
+let serverUrl = ''
+
+// one instance only: a login launch plus a desktop click must not fight over the port
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) app.quit()
+
+app.on('second-instance', () => {
+  const win = BrowserWindow.getAllWindows()[0]
+  if (!win) return
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+})
+
+function createWindow(startMinimized = false) {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -25,6 +41,7 @@ function createWindow() {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+    if (startMinimized) mainWindow.minimize()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -44,7 +61,8 @@ function createWindow() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  if (!gotLock) return // a first instance already owns the server
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -158,12 +176,36 @@ app.whenReady().then(() => {
       return { ok: false, msg: `เชื่อมต่อไม่สำเร็จ: ${errStr}` }
     }
   })
-  ipcMain.handle('start-server', (_e, dir, port, authUrl) =>
-    startServer(dir, port, typeNames(), authUrl || getSetting(db, 'auth_url') || 'http://127.0.0.1:8081')
-  )
-  ipcMain.handle('stop-server', () => stopServer())
+  ipcMain.handle('get-auto-launch', () => app.getLoginItemSettings({ args: LOGIN_ARGS }).openAtLogin)
+  ipcMain.handle('set-auto-launch', (_e, enabled) => {
+    app.setLoginItemSettings({ openAtLogin: !!enabled, args: LOGIN_ARGS })
+    return app.getLoginItemSettings({ args: LOGIN_ARGS }).openAtLogin
+  })
+  const authUrlSetting = () => getSetting(db, 'auth_url') || 'http://127.0.0.1:8081'
+  const serve = async (dir, port, authUrl) => {
+    serverUrl = await startServer(dir, port, typeNames(), authUrl || authUrlSetting())
+    setSetting(db, 'port', String(port)) // remembered so a login launch can serve unattended
+    return serverUrl
+  }
+  ipcMain.handle('start-server', (_e, dir, port, authUrl) => serve(dir, port, authUrl))
+  ipcMain.handle('stop-server', async () => {
+    await stopServer()
+    serverUrl = ''
+  })
+  // the renderer adopts a server this process already started at login
+  ipcMain.handle('server-state', () => ({
+    url: serverUrl,
+    port: Number(getSetting(db, 'port')) || 3000
+  }))
 
-  createWindow()
+  // launched by Windows at login: serve the remembered folder before the window appears
+  const atLogin = process.argv.includes('--autostart')
+  if (atLogin) {
+    const dir = scannedDir()
+    if (dir) await serve(dir, Number(getSetting(db, 'port')) || 3000).catch(() => {})
+  }
+
+  createWindow(atLogin)
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

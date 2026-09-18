@@ -8,6 +8,7 @@ function App() {
   const [error, setError] = useState('')
   const [testingAuth, setTestingAuth] = useState(false)
   const [authStatus, setAuthStatus] = useState(null)
+  const [autoLaunch, setAutoLaunch] = useState(false)
 
   // start on the scanned folder if it's where it's expected to be
   // Auto-updater states
@@ -20,6 +21,12 @@ function App() {
   useEffect(() => {
     window.api.scannedDir().then((d) => d && setDir(d))
     window.api.getAuthUrl().then((u) => u && setAuthUrl(u))
+    window.api.getAutoLaunch?.().then(setAutoLaunch)
+    // the server may already be running if Windows launched us at login
+    window.api.serverState?.().then(({ url, port }) => {
+      setPort(port)
+      if (url) setUrl(url)
+    })
     window.api.getAppVersion?.().then((v) => v && setAppVersion(v))
 
     const cleanup = window.api.onUpdateStatus?.((status) => {
@@ -193,6 +200,16 @@ function App() {
         </p>
       )}
       {error && <p className="err">{error}</p>}
+
+      <label className="row" style={{ gap: '8px', alignItems: 'center', margin: '12px 0 0', cursor: 'pointer' }}>
+        <input
+          type="checkbox"
+          checked={autoLaunch}
+          style={{ width: '20px', height: '20px', flex: 'none', accentColor: '#6988e6' }}
+          onChange={(e) => window.api.setAutoLaunch(e.target.checked).then(setAutoLaunch)}
+        />
+        เปิดโปรแกรมเมื่อเริ่ม Windows
+      </label>
 
       <div className="app-meta">
         <span>เวอร์ชัน v{appVersion}</span>
