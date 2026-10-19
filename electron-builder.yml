@@ -15,6 +15,11 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
 asarUnpack:
   - resources/**
+# ignore NODE_OPTIONS / ELECTRON_RUN_AS_NODE left in the env by other tools (e.g. a deleted temp .mjs preload)
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
 win:
   executableName: ImageWebView
 nsis:
